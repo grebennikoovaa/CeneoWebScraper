@@ -3,22 +3,21 @@ from app import app
 from flask import render_template
 
 @app.route("/")
-@app.route("/<name>")
-def index(name="World"):
+def index():
     return render_template("index.html")
 
 @app.route("/extract")
-def index(name="World"):
-    return render_template("extract.html",name=name)
+def extract():
+    return render_template("extract.html")
 
-@app.route("/extract")
-def index(name="World"):
-    return render_template("extract.html",name=name)
+@app.route("/products")
+def products():
+    return render_template("products.html")
 
 @app.route("/product/<product_id>")
-def index(name="World"):
-    return render_template("product.html"product_id=product_id)
+def product(product_id):
+    return render_template("product.html", product_id=product_id)
 
 @app.route("/about")
-def index(name="World"):
+def about():
     return render_template("about.html")
