@@ -1,6 +1,7 @@
 from app import app
 
 from flask import render_template
+from app.forms import ExtractForm
 
 @app.route("/")
 def index():
@@ -8,7 +9,8 @@ def index():
 
 @app.route("/extract")
 def extract():
-    return render_template("extract.html")
+    form = ExtractForm()
+    return render_template("extract.html", form = form)
 
 @app.route("/products")
 def products():
