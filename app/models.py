@@ -2,9 +2,13 @@ import os
 import json
 import pandas as pd
 import numpy as np
+import requests
+from bs4 import BeautifulSoup
+from config import headers
+from app.utils import extract_data, translate_data
 
 class Product:
-    def __init__(self, product_id, product_name, opinions, stats):
+    def __init__(self, product_id, product_name="", opinions=[], stats=[]):
         self.product_id = product_id
         self.product_name = product_name
         self.opinions = opinions
@@ -15,6 +19,35 @@ class Product:
     
     def __repr__(self):
         return f"Product(product_id={self.product_id}, product_name={self.product_name}, opinions=["+",".join(repr(opinion) for opinion in self.opinions)+f"], stats={self.stats})"
+    
+    def extract_name(self):
+        next_page = f"https://www.ceneo.pl/{product_id}#tab=reviews"
+        response = requests.get(next_page, headers = headers)
+        if response.status_code == 200:
+            page_dom = BeautifulSoup(response.text, 'html.parser')
+            self.product_name = extract_data(page_dom, "h1")
+            opinions_count = extract_data(page_dom, "a.product-review_link > span")
+            return bool(opinions_count)
+        else: 
+            return False
+
+    def extract_opinions(self):
+        next_page = f"https://www.ceneo.pl/{product_id}#tab=reviews"
+        while next_page:
+            response = requests.get(next_page, headers = headers)
+            if response.status_code == 200:
+               print(next_page)
+               page_dom = BeautifulSoup(response.text, 'html.parser')
+               opinions = page_dom.select("div.js_product-review:not(.user-post--highlight)")
+               print(len(opinions))
+            for opinion in opinions:
+                single_opinion = Opinion()
+                single_opinion.extract(opinion).translate().transform()
+                self.opinions.append(single_opinion)
+        try:
+            next_page = "https://www.ceneo.pl" + extract_data(page_dom, "a.pagination__next", "href")
+        except TypeError:
+            next_page = None
 
     def export_opinions(self):
         if not os.path.exists("./app/data"):
@@ -100,6 +133,21 @@ class Opinion:
     def __repr__(self):
         return "Opinion("+", ".join([f"{key}={str(getattr(self, key))}" for key in self.selectors.keys()])+")"
     
+    def extract(self, opinion):
+        for key in self.selectors.items():
+            setattr(self, key, extract_data(opinion, *value))
+
+    def translate(self):
+        self.content_en = translate_data(self.content_pl)
+        self.pros_en = [translate_data(pros) for pros in self.pros_pl]
+        self.cons_en = [translate_data(cons) for cons in self.cons_pl]
+
+    def transform(self):
+        self.recommendation = True if self.recommendation =='Polecam' else False if  self.recommendation=="Nie polecam" else None
+        self.stars= float(self.stars.split("/")[0].replace(",", "."))
+        self.vote_yes = int(self.vote_yes)
+        self.vote_no = int(self.vote_no)
+
     def transform_to_dict(self):
         return {key: getattr(self, key) for key in self.selectors.keys()}
     
