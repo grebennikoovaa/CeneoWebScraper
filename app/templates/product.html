@@ -1,5 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}{{product_id}}{% endblock %}
 {% block content %}
-
+<h2>{{ product.product_name }}</h2>
+<p><strong>Opinions:</strong> {{ product.stats.opinions_count }}</p>
+<p><strong>Pros:</strong> {{ product.stats.pros_count }}</p>
+<p><strong>Cons:</strong> {{ product.stats.cons_count }}</p>
+<p><strong>Average Score:</strong> {{ product.stats.average_rate }}</p>
+<p><a href="{{ url_for('download_opinions', product_id=product.product_id, format='csv') }}">Download CSV</a></p>
+<p><a href="{{ url_for('download_opinions', product_id=product.product_id, format='xlsx') }}">Download XLSX</a></p>
+<p><a href="{{ url_for('download_opinions', product_id=product.product_id, format='json') }}">Download JSON</a></p>
 {% endblock %}
